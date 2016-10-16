@@ -57,7 +57,7 @@ while True:
         conn.execute(subredditIns);
 
 # For each submission log the submission to DB
-    for submission in subreddit.get_hot(limit=10):
+    for submission in subreddit.get_hot(limit=20):
         if(doesNotExistInDB(submission, posts, conn)):
             postDate = datetime.fromtimestamp(submission.created_utc)
             postIns = posts.insert().values(subreddit_id=subreddit.id, redditId=submission.id, title=submission.title, description=submission.selftext, score=submission.score, created=postDate)
