@@ -3,6 +3,7 @@ import praw
 from datetime import datetime
 from credentials import mysqlURL
 from sqlalchemy import create_engine, DateTime, Table, Column, Integer, String, Text,  MetaData, ForeignKey, select
+from DBMetaData import engine, metadata, subreddits, posts, comments
 
 def doesNotExistInDB(redditInfo, table, conn):
     s = select([table]).where(table.c.redditId == redditInfo.id)
@@ -18,34 +19,6 @@ def doesNotExistInDB(redditInfo, table, conn):
 
 user_agent = "web:subredditSimulatorLTSM:v.1"
 r = praw.Reddit(user_agent=user_agent)
-
-engine = create_engine(mysqlURL, echo=True)
-metadata = MetaData();
-
-subreddits = Table('subreddits', metadata,
-    Column('id', Integer, primary_key=True),
-    Column('name', String(50)),
-    Column('redditId', String(50), unique=True),
-)
-posts = Table('posts', metadata,
-    Column('id', Integer, primary_key=True),
-    Column('subreddit_id', String(50)),
-    Column('redditId', String(50), unique=True),
-    Column('title', String(50)),
-    Column('description', Text),
-    Column('score', Integer),
-    Column('created', DateTime),
-)
-comments = Table('comments', metadata,
-    Column('id', Integer, primary_key=True),
-    Column('post_id', String(50)),
-    Column('redditId', String(50), unique=True),
-    Column('body', Text),
-    Column('score', Integer),
-    Column('created', DateTime),
-)
-# Exclude so it doesnt recreate tables every run through
-metadata.create_all(engine)
 
 conn = engine.connect()
 
