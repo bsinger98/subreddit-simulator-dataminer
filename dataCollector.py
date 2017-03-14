@@ -3,7 +3,7 @@ import praw
 from datetime import datetime
 from credentials import mysqlURL
 from sqlalchemy import create_engine, DateTime, Table, Column, Integer, String, Text,  MetaData, ForeignKey, select
-from DBMetaData import engine, metadata, subreddits, posts, comments
+from DBMetaData import engine, subreddits, posts, comments
 
 def doesNotExistInDB(redditInfo, table, conn):
     s = select([table]).where(table.c.redditId == redditInfo.id)
