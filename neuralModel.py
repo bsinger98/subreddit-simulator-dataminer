@@ -37,8 +37,7 @@ class PTBInput(object):
         self.batch_size = batch_size = config.batch_size
         self.num_steps = num_steps = config.num_steps
         self.epoch_size = ((len(data) // batch_size) - 1) // num_steps
-        self.input_data, self.targets = reader.ptb_producer(
-            data, batch_size, num_steps, name=name)
+        self.input_data, self.targets = reader.ptb_producer(data, batch_size, num_steps, name=name)
 
 
 class PTBModel(object):
@@ -55,19 +54,15 @@ class PTBModel(object):
         # Slightly better results can be obtained with forget gate biases
         # initialized to 1 but the hyperparameters of the model would need to be
         # different than reported in the paper.
-        lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(
-            size, forget_bias=0.0, state_is_tuple=True)
+        lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(size, forget_bias=0.0, state_is_tuple=True)
         if is_training and config.keep_prob < 1:
-            lstm_cell = tf.nn.rnn_cell.DropoutWrapper(
-                lstm_cell, output_keep_prob=config.keep_prob)
-        cell = tf.nn.rnn_cell.MultiRNNCell(
-            [lstm_cell] * config.num_layers, state_is_tuple=True)
+            lstm_cell = tf.nn.rnn_cell.DropoutWrapper(lstm_cell, output_keep_prob=config.keep_prob)
+        cell = tf.nn.rnn_cell.MultiRNNCell([lstm_cell] * config.num_layers, state_is_tuple=True)
 
         self._initial_state = cell.zero_state(batch_size, data_type())
 
         with tf.device("/cpu:0"):
-            embedding = tf.get_variable(
-                "embedding", [vocab_size, size], dtype=data_type())
+            embedding = tf.get_variable("embedding", [vocab_size, size], dtype=data_type())
             inputs = tf.nn.embedding_lookup(embedding, input_.input_data)
 
         if is_training and config.keep_prob < 1:
@@ -106,15 +101,11 @@ class PTBModel(object):
 
         self._lr = tf.Variable(0.0, trainable=False)
         tvars = tf.trainable_variables()
-        grads, _ = tf.clip_by_global_norm(tf.gradients(cost, tvars),
-                                          config.max_grad_norm)
+        grads, _ = tf.clip_by_global_norm(tf.gradients(cost, tvars), config.max_grad_norm)
         optimizer = tf.train.GradientDescentOptimizer(self._lr)
-        self._train_op = optimizer.apply_gradients(
-            zip(grads, tvars),
-            global_step=tf.contrib.framework.get_or_create_global_step())
+        self._train_op = optimizer.apply_gradients(zip(grads, tvars), global_step=tf.contrib.framework.get_or_create_global_step())
 
-        self._new_lr = tf.placeholder(
-            tf.float32, shape=[], name="new_learning_rate")
+        self._new_lr = tf.placeholder(tf.float32, shape=[], name="new_learning_rate")
         self._lr_update = tf.assign(self._lr, self._new_lr)
 
     def assign_lr(self, session, lr_value):
@@ -143,7 +134,7 @@ class PTBModel(object):
     @property
     def train_op(self):
         return self._train_op
-        
+
     @property
     def output_probs(self):
         return self._output_probs
@@ -233,12 +224,14 @@ def run_epoch(session, model, eval_op=None, verbose=False):
         for i, (c, h) in enumerate(model.initial_state):
             feed_dict[c] = state[i].c
             feed_dict[h] = state[i].h
-        
+
+        print(fetches)
+        print(feed_dict)
         vals = session.run(fetches, feed_dict)
         cost = vals["cost"]
         state = vals["final_state"]
         probs = vals["output_probs"]
-        
+
         chosen_word = np.argmax(probs, 1)
 
         costs += cost
@@ -251,7 +244,7 @@ def run_epoch(session, model, eval_op=None, verbose=False):
 
     return np.exp(costs / iters)
 
-def predict_word_with_model(session, model):
+def predict_batch_with_model(session, model):
     """Predicts Word with the model"""
     start_time = time.time()
     costs = 0.0
@@ -261,20 +254,22 @@ def predict_word_with_model(session, model):
     fetches = {
         "output_probs": model.output_probs
     }
-    
-    feed_dict = {}
-    for i, (c, h) in enumerate(model.initial_state):
-        feed_dict[c] = state[i].c
-        feed_dict[h] = state[i].h
+    batch = []
+    for step in range(model.input.epoch_size):
+        feed_dict = {}
+        for i, (c, h) in enumerate(model.initial_state):
+            feed_dict[c] = state[i].c
+            feed_dict[h] = state[i].h
 
-    vals = session.run(fetches, feed_dict)
-    probs = vals["output_probs"]
-        
-    chosen_word = np.argmax(probs, 1)
-    
-    return chosen_word[-1]
+        vals = session.run(fetches, feed_dict)
+        probs = vals["output_probs"]
 
-        
+        prediction = np.argmax(probs, 1)
+        word = prediction[-1]
+        batch.append(word)
+
+    return batch
+
 
 def get_config():
     if FLAGS.model == "small":
@@ -300,7 +295,7 @@ def main(_):
 
         data = []
 
-        commentSelect = select([comments.c.body]).limit(10000)
+        commentSelect = select([comments.c.body]).limit(1000)
         rows = conn.execute(commentSelect)
         for row in rows:
             data.append(row)
@@ -313,7 +308,7 @@ def main(_):
 
         raw_data = reader.ptb_raw_data(trainData, validData, testData, FLAGS.data_path)
         train_data, valid_data, test_data, vocabulary = raw_data
-        
+
         with tf.Graph().as_default():
             initializer = tf.random_uniform_initializer(-config.init_scale, config.init_scale)
 
@@ -328,8 +323,7 @@ def main(_):
             with tf.name_scope("Valid"):
                 valid_input = PTBInput(config=config, data=valid_data, name="ValidInput")
                 with tf.variable_scope("Model", reuse=True, initializer=initializer):
-                    mvalid = PTBModel(is_training=False,
-                                      config=config, input_=valid_input)
+                    mvalid = PTBModel(is_training=False, config=config, input_=valid_input)
                 tf.scalar_summary("Validation Loss", mvalid.cost)
 
             with tf.name_scope("Test"):
@@ -351,18 +345,30 @@ def main(_):
 
                 test_perplexity = run_epoch(session, mtest)
                 print("Test Perplexity: %.3f" % test_perplexity)
-                
+
+
                 # Generate Sentences
                 number_of_sentences = 10  # generate 10 sentences one time
                 sentence_cnt = 0
                 text = '\n'
                 end_of_sentence_char = vocabulary['<eos>']
                 id_to_word = {y:x for x,y in vocabulary.items()}
-                input_char = np.array([[end_of_sentence_char]])
+
+                print('hello')
+                wordIds = predict_batch_with_model(session, mtest)
+                words = []
+                for wordId in range(len(wordIds)):
+                    word = id_to_word[wordIds[wordId]]
+                    words.append(word)
+
+                print(words)
+
+                '''input_char = np.array([[end_of_sentence_char]])
+                run_input = PTBInput(config=config, data=input_char, name="RunInput")
                 state = session.run(mtest.initial_state)
-                
+
                 while sentence_cnt < number_of_sentences:
-                    feed_dict = {mtest.input: input_char, mtest.initial_state: state}
+                    feed_dict = {mtest.input: run_input, mtest.initial_state: state}
                     probs, state = session.run([mtest.output_probs, mtest.final_state],feed_dict=feed_dict)
                     sampled_char = pick_from_weight(probs[0])
                     if sampled_char == end_of_sentence_char:
@@ -372,11 +378,10 @@ def main(_):
                         text += ' ' + id_to_word[sampled_char]
                     input_char = np.array([[sampled_char]])
                 print(text)
-                
+                '''
                 if FLAGS.save_path:
                     print("Saving model to %s." % FLAGS.save_path)
-                    sv.saver.save(session, FLAGS.save_path,
-                                  global_step=sv.global_step)
+                    sv.saver.save(session, FLAGS.save_path, global_step=sv.global_step)
     else:
         with tf.Graph().as_default():
             initializer = tf.random_uniform_initializer(-config.init_scale, config.init_scale)
