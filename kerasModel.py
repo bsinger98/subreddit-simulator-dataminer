@@ -1,4 +1,5 @@
 # Load LSTM network and generate text
+import argparse
 import sys
 import numpy
 from keras.models import Sequential
@@ -11,26 +12,36 @@ from keras.utils import np_utils
 from DBMetaData import engine, subreddits, posts, comments
 from sqlalchemy import select
 
-# Load Comment data from server
-conn = engine.connect()
-data = []
-commentSelect = select([comments.c.body]).limit(5000)
-rows = conn.execute(commentSelect)
-for row in rows:
-    data.append(row)
+# Parse Flags
+parser = argparse.ArgumentParser()
+parser.add_argument('--getData', dest='getData', action='store_true', help='Gets New Data from server and saves it to data.txt')
+parser.set_defaults(getData=False)
+args = parser.parse_args()
 
-raw_text = []
-for comment in data:
-  words = comment[0].split()
-  # Mark end of comment with <eos>
-  words.append("<eos>")
-  raw_text = raw_text + words
+print(args.getData)
+if(args.getData):
+    # Load Comment data from server
+    conn = engine.connect()
+    data = []
+    commentSelect = select([comments.c.body]).limit(5000)
+    rows = conn.execute(commentSelect)
+    for row in rows:
+        data.append(row)
 
-# TODO handle puncuation
-raw_text = [x.lower() for x in raw_text]
+    raw_text = []
+    for comment in data:
+      words = comment[0].split()
+      # Mark end of comment with <eos>
+      words.append("<eos>")
+      raw_text = raw_text + words
 
-dataFile = open('data/data.txt', 'w')
-dataFile.write(' '.join(raw_text))
+    # TODO handle puncuation
+    raw_text = [x.lower() for x in raw_text]
+
+    dataFile = open('data/data.txt', 'w')
+    dataFile.write(' '.join(raw_text))
+
+raw_text = open('data/data.txt').read().split()
 
 # create mapping of unique words to integers
 words = sorted(list(set(raw_text)))
@@ -69,4 +80,4 @@ filepath="weights-improvement-{epoch:02d}-{loss:.4f}.hdf5"
 checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 callbacks_list = [checkpoint]
 # fit the model
-model.fit(X, y, nb_epoch=10, batch_size=128, callbacks=callbacks_list)
+model.fit(X, y, epochs=20, batch_size=128, callbacks=callbacks_list)
