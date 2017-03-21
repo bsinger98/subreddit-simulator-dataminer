@@ -8,8 +8,17 @@ from keras.layers import LSTM
 from keras.callbacks import ModelCheckpoint
 from keras.utils import np_utils
 
+# Use for getting data from cloud
+#from google.cloud import storage
+#storage_client = storage.Client()
+#bucket = storage_client.get_bucket('subredditsimulator')
+#blob = bucket.blob('data/data.txt')
+# raw_text = blob.download_as_string().decode('UTF-8').split()
+
+# Use for getting data from local
 raw_text = open('data/data.txt').read().split()
 
+raw_text = raw_text[]
 # create mapping of unique words to integers
 words = sorted(list(set(raw_text)))
 word_to_int = dict((c, i) for i, c in enumerate(words))
@@ -38,7 +47,7 @@ X = X / float(n_vocab)
 y = np_utils.to_categorical(dataY)
 # define the LSTM model
 model = Sequential()
-model.add(LSTM(256, input_shape=(X.shape[1], X.shape[2])))
+model.add(LSTM(10, input_shape=(X.shape[1], X.shape[2])))
 model.add(Dropout(0.2))
 model.add(Dense(y.shape[1], activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='adam')
@@ -47,4 +56,4 @@ filepath="weights-improvement-{epoch:02d}-{loss:.4f}.hdf5"
 checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 callbacks_list = [checkpoint]
 # fit the model
-# model.fit(X, y, epochs=20, batch_size=128, callbacks=callbacks_list)
+model.fit(X, y, epochs=20, batch_size=128, callbacks=callbacks_list)
