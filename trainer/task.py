@@ -18,7 +18,6 @@ from keras.utils import np_utils
 # Use for getting data from local
 raw_text = open('data/data.txt').read().split()
 
-raw_text = raw_text[]
 # create mapping of unique words to integers
 words = sorted(list(set(raw_text)))
 word_to_int = dict((c, i) for i, c in enumerate(words))
