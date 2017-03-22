@@ -8,9 +8,9 @@ from keras.layers import LSTM
 from keras.callbacks import ModelCheckpoint
 from keras.utils import np_utils
 # load ascii text and covert to lowercase
-filename = "data.txt"
+filename = "data/data.txt"
 raw_text = open(filename).read()
-raw_text = raw_text.lower()
+raw_text = raw_text[:66548]
 # create mapping of unique chars to integers, and a reverse mapping
 chars = sorted(list(set(raw_text)))
 char_to_int = dict((c, i) for i, c in enumerate(chars))
@@ -39,18 +39,18 @@ X = X / float(n_vocab)
 y = np_utils.to_categorical(dataY)
 # define the LSTM model
 model = Sequential()
-model.add(LSTM(256, input_shape=(X.shape[1], X.shape[2])))
+model.add(LSTM(10, input_shape=(X.shape[1], X.shape[2])))
 model.add(Dropout(0.2))
 model.add(Dense(y.shape[1], activation='softmax'))
 # load the network weights
-filename = "weights-improvement-05-2.6670.hdf5"
+filename = "models/weights-improvement-19-6.9909.hdf5"
 model.load_weights(filename)
 model.compile(loss='categorical_crossentropy', optimizer='adam')
 # pick a random seed
 start = numpy.random.randint(0, len(dataX)-1)
 pattern = dataX[start]
 print("Seed:")
-print("\"", ''.join([int_to_char[value] for value in pattern]), "\"")
+print("\"", ' '.join([int_to_char[value] for value in pattern]), "\"")
 # generate characters
 words = [];
 for i in range(100):

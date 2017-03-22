@@ -1,6 +1,7 @@
 # Load LSTM network and generate text
 import sys
 import numpy
+import math
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Dropout
@@ -16,7 +17,8 @@ from keras.utils import np_utils
 # raw_text = blob.download_as_string().decode('UTF-8').split()
 
 # Use for getting data from local
-raw_text = open('data/data.txt').read().split()
+raw_text = open('data/data.txt').read()
+raw_text = raw_text[:66548]
 
 # create mapping of unique words to integers
 words = sorted(list(set(raw_text)))
@@ -44,9 +46,10 @@ X = numpy.reshape(dataX, (n_patterns, seq_length, 1))
 X = X / float(n_vocab)
 # one hot encode the output variable
 y = np_utils.to_categorical(dataY)
+
 # define the LSTM model
 model = Sequential()
-model.add(LSTM(10, input_shape=(X.shape[1], X.shape[2])))
+model.add(LSTM(256, input_shape=(X.shape[1], X.shape[2])))
 model.add(Dropout(0.2))
 model.add(Dense(y.shape[1], activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='adam')
