@@ -18,7 +18,6 @@ from keras.utils import np_utils
 
 # Use for getting data from local
 raw_text = open('data/data.txt').read()
-raw_text = raw_text[:66548]
 
 # create mapping of unique words to integers
 words = sorted(list(set(raw_text)))
@@ -30,7 +29,7 @@ n_vocab = len(words)
 print("Total Words: ", n_words)
 print("Total Vocab: ", n_vocab)
 # prepare the dataset of input to output pairs encoded as integers
-seq_length = 100
+seq_length = 500
 dataX = []
 dataY = []
 for i in range(0, n_words - seq_length, 1):

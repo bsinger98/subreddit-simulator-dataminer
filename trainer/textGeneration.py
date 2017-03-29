@@ -39,29 +39,29 @@ X = X / float(n_vocab)
 y = np_utils.to_categorical(dataY)
 # define the LSTM model
 model = Sequential()
-model.add(LSTM(10, input_shape=(X.shape[1], X.shape[2])))
+model.add(LSTM(256, input_shape=(X.shape[1], X.shape[2])))
 model.add(Dropout(0.2))
 model.add(Dense(y.shape[1], activation='softmax'))
 # load the network weights
-filename = "models/weights-improvement-19-6.9909.hdf5"
+filename = "models/weights-improvement-19-1.8899.hdf5"
 model.load_weights(filename)
 model.compile(loss='categorical_crossentropy', optimizer='adam')
 # pick a random seed
 start = numpy.random.randint(0, len(dataX)-1)
 pattern = dataX[start]
 print("Seed:")
-print("\"", ' '.join([int_to_char[value] for value in pattern]), "\"")
+print("\"", ''.join([int_to_char[value] for value in pattern]), "\"")
 # generate characters
-words = [];
-for i in range(100):
+sentence = ''
+for i in range(1000):
     x = numpy.reshape(pattern, (1, len(pattern), 1))
     x = x / float(n_vocab)
     prediction = model.predict(x, verbose=0)
     index = numpy.argmax(prediction)
     result = int_to_char[index]
-    words.append(result)
+    sentence += result
     seq_in = [int_to_char[value] for value in pattern]
     pattern.append(index)
     pattern = pattern[1:len(pattern)]
 
-print(words)
+print(sentence)
