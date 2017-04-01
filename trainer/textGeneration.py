@@ -10,7 +10,7 @@ from keras.utils import np_utils
 # load ascii text and covert to lowercase
 filename = "data/data.txt"
 raw_text = open(filename).read()
-raw_text = raw_text[:66548]
+raw_text = raw_text[:100000]
 # create mapping of unique chars to integers, and a reverse mapping
 chars = sorted(list(set(raw_text)))
 char_to_int = dict((c, i) for i, c in enumerate(chars))
@@ -21,7 +21,7 @@ n_chars = len(raw_text)
 n_vocab = len(chars)
 
 # prepare the dataset of input to output pairs encoded as integers
-seq_length = 100
+seq_length = 300
 dataX = []
 dataY = []
 for i in range(0, n_chars - seq_length, 1):
@@ -43,7 +43,7 @@ model.add(LSTM(256, input_shape=(X.shape[1], X.shape[2])))
 model.add(Dropout(0.2))
 model.add(Dense(y.shape[1], activation='softmax'))
 # load the network weights
-filename = "models/weights-improvement-19-1.8899.hdf5"
+filename = "models/weights-improvement-04-2.8065.hdf5"
 model.load_weights(filename)
 model.compile(loss='categorical_crossentropy', optimizer='adam')
 # pick a random seed
