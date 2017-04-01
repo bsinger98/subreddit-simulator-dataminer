@@ -18,7 +18,6 @@ from keras.utils import np_utils
 
 # Use for getting data from local
 raw_text = open('data/data.txt').read()
-raw_text = raw_text[:100000]
 
 # create mapping of unique words to integers
 words = sorted(list(set(raw_text)))
@@ -61,4 +60,4 @@ filepath="models/weights-improvement-bigger-{epoch:02d}-{loss:.4f}.hdf5"
 checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 callbacks_list = [checkpoint]
 # fit the model
-model.fit(X, y, epochs=20, batch_size=128, callbacks=callbacks_list)
+model.fit(X, y, epochs=30, batch_size=128, callbacks=callbacks_list)
